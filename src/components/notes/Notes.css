@@ -1,0 +1,92 @@
+#notes {
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #90caf9;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  color: #9e9e9e;
+}
+
+.add-note-box {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.add-note-box textarea {
+  resize: none;
+  width: 100%;
+  background-color: #2a2a2a;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.add-note-box button {
+  align-self: flex-end;
+  padding: 0.5rem 1rem;
+  background-color: #90caf9;
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-note-box button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notes-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.note-card {
+  background-color: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s;
+}
+
+.note-card:hover {
+  transform: translateY(-2px);
+  border-color: #90caf9;
+}
+
+.note-card h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #90caf9;
+}
+
+.note-card p {
+  margin: 0 0 0.75rem;
+  color: #e0e0e0;
+}
+
+.note-date {
+  font-size: 0.8rem;
+  color: #9e9e9e;
+}
