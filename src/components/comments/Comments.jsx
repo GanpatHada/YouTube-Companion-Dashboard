@@ -1,11 +1,35 @@
 import { useEffect, useState } from "react";
 import "./Comments.css";
-import { getVideoComments } from "../../service/commentService";
 import toast from "react-hot-toast";
 
+// Service to fetch comments with replies
+const getVideoComments = async (videoId, apiKey) => {
+  const res = await fetch(
+    `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=${videoId}&key=${apiKey}&maxResults=50`
+  );
+  const data = await res.json();
+
+  return data.items.map((item) => ({
+    id: item.id,
+    author: item.snippet.topLevelComment.snippet.authorDisplayName,
+    text: item.snippet.topLevelComment.snippet.textDisplay,
+    canDelete: false,
+    replies: item.replies
+      ? item.replies.comments.map((reply) => ({
+          id: reply.id,
+          author: reply.snippet.authorDisplayName,
+          text: reply.snippet.textDisplay,
+          canDelete: false,
+        }))
+      : [],
+  }));
+};
+
+// Single Comment Component
 const Comment = ({ comment, onDelete, onReply }) => {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [showReplies, setShowReplies] = useState(false);
 
   const handleReplySubmit = () => {
     if (!replyText.trim()) {
@@ -15,19 +39,36 @@ const Comment = ({ comment, onDelete, onReply }) => {
     onReply(comment.id, replyText);
     setReplyText("");
     setShowReplyBox(false);
+    setShowReplies(true);
   };
 
   return (
     <div id="comment">
-      <h4>{comment?.author}</h4>
-      <p>{comment?.text}</p>
-      <div style={{ display: "flex", gap: "8px" }}>
-        <button className="reply-button" onClick={() => setShowReplyBox(!showReplyBox)}>
+      <h4>{comment.author}</h4>
+      <p>{comment.text}</p>
+
+      <div>
+        <button
+          className="reply-button"
+          onClick={() => setShowReplyBox(!showReplyBox)}
+        >
           {showReplyBox ? "Cancel" : "Reply"}
         </button>
+
         {comment.canDelete && (
           <button className="delete-button" onClick={() => onDelete(comment.id)}>
             Delete
+          </button>
+        )}
+
+        {comment.replies && comment.replies.length > 0 && (
+          <button
+            className="replies-toggle"
+            onClick={() => setShowReplies((prev) => !prev)}
+          >
+            {showReplies
+              ? "Hide Replies"
+              : `View Replies (${comment.replies.length})`}
           </button>
         )}
       </div>
@@ -45,11 +86,11 @@ const Comment = ({ comment, onDelete, onReply }) => {
         </div>
       )}
 
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="replies" style={{ marginLeft: "20px", marginTop: "8px" }}>
+      {showReplies && comment.replies && comment.replies.length > 0 && (
+        <div className="replies">
           {comment.replies.map((reply) => (
             <div key={reply.id} className="reply">
-              <strong>{reply.author}</strong>
+              <h4>{reply.author}</h4>
               <p>{reply.text}</p>
             </div>
           ))}
@@ -59,6 +100,7 @@ const Comment = ({ comment, onDelete, onReply }) => {
   );
 };
 
+// Comments Content Component
 const CommentsContent = ({ videoId }) => {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -80,15 +122,8 @@ const CommentsContent = ({ videoId }) => {
 
   const handlePostComment = async () => {
     const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) {
-      toast.error("You must be logged in to comment.");
-      return;
-    }
-
-    if (!newComment.trim()) {
-      toast.error("Comment cannot be empty.");
-      return;
-    }
+    if (!accessToken) return toast.error("You must be logged in to comment.");
+    if (!newComment.trim()) return toast.error("Comment cannot be empty.");
 
     try {
       const res = await fetch(
@@ -103,21 +138,14 @@ const CommentsContent = ({ videoId }) => {
           body: JSON.stringify({
             snippet: {
               videoId,
-              topLevelComment: {
-                snippet: {
-                  textOriginal: newComment,
-                },
-              },
+              topLevelComment: { snippet: { textOriginal: newComment } },
             },
           }),
         }
       );
 
       const data = await res.json();
-
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
       toast.success("Comment posted!");
       setNewComment("");
@@ -138,25 +166,13 @@ const CommentsContent = ({ videoId }) => {
 
   const handleDeleteComment = async (commentId) => {
     const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) {
-      toast.error("You must be logged in.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this comment?")) {
-      return;
-    }
+    if (!accessToken) return toast.error("You must be logged in.");
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
 
     try {
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/comments?id=${commentId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            Accept: "application/json",
-          },
-        }
+        { method: "DELETE", headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       if (!res.ok) {
@@ -173,32 +189,26 @@ const CommentsContent = ({ videoId }) => {
 
   const handleReplyToComment = async (parentCommentId, replyText) => {
     const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) {
-      toast.error("You must be logged in.");
-      return;
-    }
+    if (!accessToken) return toast.error("You must be logged in.");
 
     try {
-      const res = await fetch("https://www.googleapis.com/youtube/v3/comments?part=snippet", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          snippet: {
-            parentId: parentCommentId,
-            textOriginal: replyText,
+      const res = await fetch(
+        "https://www.googleapis.com/youtube/v3/comments?part=snippet",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
           },
-        }),
-      });
+          body: JSON.stringify({
+            snippet: { parentId: parentCommentId, textOriginal: replyText },
+          }),
+        }
+      );
 
       const data = await res.json();
-
-      if (data.error) {
-        throw new Error(data.error.message);
-      }
+      if (data.error) throw new Error(data.error.message);
 
       toast.success("Reply posted!");
 
@@ -212,10 +222,7 @@ const CommentsContent = ({ videoId }) => {
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment.id === parentCommentId
-            ? {
-                ...comment,
-                replies: [...(comment.replies || []), newReply],
-              }
+            ? { ...comment, replies: [...(comment.replies || []), newReply] }
             : comment
         )
       );
@@ -236,8 +243,15 @@ const CommentsContent = ({ videoId }) => {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           rows={3}
-        ></textarea>
-        <button onClick={handlePostComment}>Post Comment</button>
+        />
+        <div style={{ marginTop: "6px" }}>
+          <button className="secondary-btn" onClick={() => setNewComment("")}>
+            Clear
+          </button>
+          <button className="primary-btn" onClick={handlePostComment}>
+            Post Comment
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -256,8 +270,9 @@ const CommentsContent = ({ videoId }) => {
   );
 };
 
+// Main Comments Wrapper
 const Comments = () => {
-  const videoId = "6K3_DXCEA5Q"; // Replace with dynamic if needed
+  const videoId = "6K3_DXCEA5Q"; // replace with dynamic videoId if needed
   return (
     <div id="comments">
       <h3>Comments</h3>

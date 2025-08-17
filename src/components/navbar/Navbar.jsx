@@ -1,83 +1,101 @@
-import { useEffect, useState } from 'react';
-import './Navbar.css';
+import { useEffect } from "react";
+import "./Navbar.css";
+import { useUser } from "../../contexts/UserContext";
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
+  const { state, dispatch } = useUser();
+
+  console.log(state.user)
 
   useEffect(() => {
-    // Load SDK
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
+    // Load Google SDK
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
+    script.onload = () => {
+      const token = localStorage.getItem("yt_access_token");
+      if (token) {
+        fetchUserProfile(token);
+      }
+    };
     document.body.appendChild(script);
 
-    // On reload, check localStorage for accessToken and fetch user info
-    const token = localStorage.getItem('yt_access_token');
-    if (token) {
-      fetchUserProfile(token);
-    }
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
   const fetchUserProfile = async (token) => {
     try {
-      const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      dispatch({ type: "SET_LOADING", payload: true });
+
+      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+        headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (!res.ok) throw new Error("Invalid or expired token");
+
       const data = await res.json();
-      console.log(data);
-      setUser(data); // contains name, picture, email etc.
+      dispatch({ type: "SET_USER", payload: data });
     } catch (err) {
-      console.error('Failed to fetch user info', err);
-      localStorage.removeItem('yt_access_token');
+      console.error("Failed to fetch user info", err);
+      localStorage.removeItem("yt_access_token");
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
   const handleLogin = () => {
-    if (window.google) {
+    if (window.google && window.google.accounts) {
       const client = window.google.accounts.oauth2.initTokenClient({
-        client_id: '716655971200-bs1bujuagophggrmicr7jmn97h4ojegs.apps.googleusercontent.com',
-        scope: 'https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/userinfo.profile',
+        client_id:
+          "716655971200-bs1bujuagophggrmicr7jmn97h4ojegs.apps.googleusercontent.com",
+        scope:
+          "https://www.googleapis.com/auth/youtube.force-ssl https://www.googleapis.com/auth/userinfo.profile",
         callback: (response) => {
           if (response.access_token) {
-            localStorage.setItem('yt_access_token', response.access_token);
+            localStorage.setItem("yt_access_token", response.access_token);
             fetchUserProfile(response.access_token);
           }
         },
       });
       client.requestAccessToken();
     } else {
-      alert('Google SDK not loaded yet.');
+      alert("Google SDK not loaded yet.");
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('yt_access_token');
-    setUser(null);
+    localStorage.removeItem("yt_access_token");
+    dispatch({ type: "CLEAR_USER" });
   };
 
   return (
-    <nav id="navbar">
-      <h3 id="logo">MyVideo</h3>
-      {user ? (
-        <div className="user-info">
-          <img
-            src={user.picture}
-            alt={user.name}
-            style={{ width: 30, height: 30, borderRadius: '50%', marginRight: 8 }}
-          />
-          <span>{user.name}</span>
-          <button onClick={handleLogout} style={{ marginLeft: 10 }}>
-            Logout
-          </button>
-        </div>
-      ) : (
-        <button onClick={handleLogin}>Login with Google</button>
-      )}
-    </nav>
-  );
+  <nav id="navbar">
+    <h3 id="logo">MyVideo</h3>
+
+    {state.loading ? (
+      <span>Loading...</span>
+    ) : state.user ? (
+      <div className="user-info">
+        <span>{state.user.name}</span>
+        <img
+          src={state.user.picture || "https://i.pravatar.cc/150?img=3"}
+          alt={state.user.name || "User Avatar"}
+          onError={(e) => {
+            e.currentTarget.src = "https://i.pravatar.cc/150?img=3";
+          }}
+        />
+        <button onClick={handleLogout} style={{ marginLeft: 10 }}>
+          Logout
+        </button>
+      </div>
+    ) : (
+      <button onClick={handleLogin}>Login with Google</button>
+    )}
+  </nav>
+);
+
 };
 
 export default Navbar;

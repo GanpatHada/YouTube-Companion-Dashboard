@@ -6,6 +6,17 @@
     padding: 1rem;
     align-items: center;
 }
+#navbar .user-info{
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#navbar .user-info img{
+    height: 30px;
+    width: 30px;
+    object-fit: cover;
+    border-radius: 50%;
+}
 #navbar button{
     padding: 0.5rem 1rem;
     background-color: white;

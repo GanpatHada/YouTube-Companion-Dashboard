@@ -29,25 +29,25 @@ h2 {
   gap: 0.75rem;
 }
 
-.add-note-box textarea {
+.add-note-box textarea,
+.add-note-box input {
   resize: none;
-  width: 100%;
   background-color: #2a2a2a;
-  color: #fff;
+  color: #e0e0e0;
   border: 1px solid #444;
   padding: 0.5rem;
   border-radius: 6px;
+  font-size: 0.95rem;
+  font-family: inherit;
 }
 
-.add-note-box button {
-  align-self: flex-end;
-  padding: 0.5rem 1rem;
-  background-color: #90caf9;
-  color: #000;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
+.add-note-box input::placeholder,
+.add-note-box textarea::placeholder {
+  color: #9e9e9e;
+}
+
+.add-note-box button{
+  width: fit-content;
 }
 
 .add-note-box button:disabled {
@@ -66,8 +66,12 @@ h2 {
   border: 1px solid #333;
   border-radius: 10px;
   padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.note-card > span{
+  color: gray;
 }
 
 .note-card:hover {
@@ -76,17 +80,37 @@ h2 {
 }
 
 .note-card h4 {
-  margin: 0 0 0.5rem;
   font-size: 1.1rem;
   color: #90caf9;
 }
 
 .note-card p {
-  margin: 0 0 0.75rem;
+  margin: 1rem 0rem;
   color: #e0e0e0;
 }
 
 .note-date {
   font-size: 0.8rem;
   color: #9e9e9e;
+}
+
+.note-tags {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.note-tags span {
+  display: inline-block;
+  color: #90caf9;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+.note-tags span::before{
+  content: "#";
 }
