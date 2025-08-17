@@ -104,42 +104,48 @@ const Video = () => {
       </section>
 
       <section id="description">
-        <div>
-          {editMode ? (
-            <>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                style={{ width: "100%", marginBottom: "8px" }}
-              />
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={4}
-                style={{ width: "100%", marginBottom: "8px" }}
-              />
-              <button onClick={handleSave}>Save</button>
-              <button onClick={() => setEditMode(false)} style={{ marginLeft: "8px" }}>
+        {editMode ? (
+          <div>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+            />
+            <div>
+              <button className="primary-btn" onClick={handleSave}>
+                Save
+              </button>
+              <button
+                className="secondary-btn"
+                onClick={() => setEditMode(false)}
+                style={{ marginLeft: "8px" }}
+              >
                 Cancel
               </button>
-            </>
-          ) : (
-            <>
-              <h3>{videoInfo?.title}</h3>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h3>{videoInfo?.title}</h3>
+            <div>
               <p>{videoInfo?.description}</p>
               <p>{videoInfo?.publishedAt?.split("T")[0]}</p>
-              <button onClick={() => setEditMode(true)}>Edit</button>
-            </>
-          )}
-        </div>
-        <div>
+            </div>
+            <button className="primary-btn" onClick={() => setEditMode(true)}>
+              Edit
+            </button>
+          </div>
+        )}
+
+        <section>
           <span>
-            <strong>Views:</strong> {videoInfo?.views}
-          </span>
-          <span>
-            <strong>Likes:</strong> {videoInfo?.likes}
-          </span>
-        </div>
+          <strong>Views:</strong> {videoInfo?.views}
+        </span>
+        <span>
+          <strong>Likes:</strong> {videoInfo?.likes}
+        </span>
+        </section>
       </section>
     </div>
   );

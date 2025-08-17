@@ -189,7 +189,7 @@ const CommentsContent = ({ videoId }) => {
 
   const handleReplyToComment = async (parentCommentId, replyText) => {
     const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) return toast.error("You must be logged in.");
+    if (!accessToken) return toast.error("You must be logged in to reply");
 
     try {
       const res = await fetch(

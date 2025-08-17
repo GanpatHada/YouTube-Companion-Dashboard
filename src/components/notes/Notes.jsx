@@ -12,7 +12,7 @@ const Notes = () => {
   const [submitting, setSubmitting] = useState(false);
   const [searchTag, setSearchTag] = useState(""); // search input
 
-  // Fetch notes from backend
+
   const fetchNotes = async () => {
     try {
       const res = await fetch(
@@ -27,8 +27,12 @@ const Notes = () => {
     }
   };
 
-  // Handle adding a new note
   const handleAddNote = async () => {
+
+    
+    if(!user.user)
+      return toast.error('Please login to add note')
+
     const trimmedNote = newNote.trim();
     if (!trimmedNote) return;
 
@@ -49,7 +53,7 @@ const Notes = () => {
           body: JSON.stringify({
             name: user.user.name,
             note: trimmedNote,
-            tags: tagsArray, // send tags as array
+            tags: tagsArray,
             email: user.user.email,
             userId: user.user.id,
           }),
