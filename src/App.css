@@ -1,5 +1,6 @@
 #app-content{
     display: flex;
+    flex-direction: column;
     padding: 1rem;
     overflow-y: auto;
     gap: 1rem;

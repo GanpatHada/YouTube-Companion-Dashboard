@@ -1,37 +1,16 @@
-import React, { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Notes.css";
 import toast from "react-hot-toast";
 import { useUser } from "../../contexts/UserContext";
 
-const Notes = () => {
+const AddNote = ({ setNotes }) => {
   const { state: user } = useUser();
-  const [notes, setNotes] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [newNote, setNewNote] = useState("");
-  const [newTags, setNewTags] = useState(""); // comma-separated tags
+  const [newTags, setNewTags] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [searchTag, setSearchTag] = useState(""); // search input
-
-
-  const fetchNotes = async () => {
-    try {
-      const res = await fetch(
-        "https://youtube-companion-dashboard-backend.onrender.com/api/notes"
-      );
-      const result = await res.json();
-      setNotes(result.data);
-    } catch (error) {
-      console.error("Failed to fetch notes:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddNote = async () => {
-
-    
-    if(!user.user)
-      return toast.error('Please login to add note')
+    if (!user.user) return toast.error("Please login to add note");
 
     const trimmedNote = newNote.trim();
     if (!trimmedNote) return;
@@ -79,63 +58,108 @@ const Notes = () => {
     }
   };
 
+  return (
+    <div className="add-note-box">
+      <textarea
+        placeholder="Write your note here..."
+        rows={3}
+        value={newNote}
+        onChange={(e) => setNewNote(e.target.value)}
+      />
+
+      <input
+        type="text"
+        placeholder="Enter tags (comma separated)"
+        value={newTags}
+        onChange={(e) => setNewTags(e.target.value)}
+      />
+
+      <button
+        onClick={handleAddNote}
+        disabled={!newNote.trim() || submitting}
+        className="primary-btn"
+      >
+        {submitting ? "Adding..." : "Add Note"}
+      </button>
+    </div>
+  );
+};
+
+const SearchBox = ({ searchTag, setSearchTag }) => {
+  return (
+    <div className="search-box">
+      <input
+        type="text"
+        placeholder="Search by tag..."
+        value={searchTag}
+        onChange={(e) => setSearchTag(e.target.value)}
+      />
+    </div>
+  );
+};
+
+const Note = ({ note }) => {
+  return (
+    <div className="note-card">
+      <h4>{note.name}</h4>
+      <span>{note.email}</span>
+      <p>{note.note}</p>
+
+      {note.tags && note.tags.length > 0 && (
+        <div className="note-tags">
+          {note.tags.map((tag, idx) => (
+            <span key={idx}>{tag}</span>
+          ))}
+        </div>
+      )}
+
+      <span className="note-date">
+        {new Date(note.createdAt).toLocaleString()}
+      </span>
+    </div>
+  );
+};
+
+const Notes = () => {
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTag, setSearchTag] = useState("");
+
+  const fetchNotes = async () => {
+    try {
+      const res = await fetch(
+        "https://youtube-companion-dashboard-backend.onrender.com/api/notes"
+      );
+      const result = await res.json();
+      setNotes(result.data);
+    } catch (error) {
+      console.error("Failed to fetch notes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchNotes();
   }, []);
 
   const filteredNotes = notes.filter((note) =>
-  searchTag.trim() === ""
-    ? true
-    : note.tags?.some((tag) =>
-        tag.toLowerCase().includes(searchTag.toLowerCase())
-      )
-);
+    searchTag.trim() === ""
+      ? true
+      : note.tags?.some((tag) =>
+          tag.toLowerCase().includes(searchTag.toLowerCase())
+        )
+  );
 
   return (
     <div id="notes">
       <h2>Notes</h2>
-
-      <div className="add-note-box">
-        <textarea
-          placeholder="Write your note here..."
-          rows={3}
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-        />
-
-        <input
-          type="text"
-          placeholder="Enter tags (comma separated)"
-          value={newTags}
-          onChange={(e) => setNewTags(e.target.value)}
-        />
-
-        <button
-          onClick={handleAddNote}
-          disabled={!newNote.trim() || submitting}
-          className="primary-btn"
-        >
-          {submitting ? "Adding..." : "Add Note"}
-        </button>
-      </div>
-
-      <div className="search-box" style={{ marginBottom: "1rem" }}>
-        <input
-          type="text"
-          placeholder="Search by tag..."
-          value={searchTag}
-          onChange={(e) => setSearchTag(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "8px",
-            borderRadius: "6px",
-            border: "1px solid #444",
-            backgroundColor: "#2a2a2a",
-            color: "#e0e0e0",
-          }}
-        />
-      </div>
-
+      <AddNote setNotes={setNotes} />
+      <header>
+        <h3>All Notes</h3>
+        <SearchBox searchTag={searchTag} setSearchTag={setSearchTag} />
+      </header>
+      
       {loading ? (
         <p className="loading">Loading notes...</p>
       ) : filteredNotes.length === 0 ? (
@@ -143,23 +167,7 @@ const Notes = () => {
       ) : (
         <div className="notes-list">
           {filteredNotes.map((note) => (
-            <div key={note._id} className="note-card">
-              <h4>{note.name}</h4>
-              <span>{note.email}</span>
-              <p>{note.note}</p>
-
-              {note.tags && note.tags.length > 0 && (
-                <div className="note-tags">
-                  {note.tags.map((tag, idx) => (
-                    <span key={idx}>{tag}</span>
-                  ))}
-                </div>
-              )}
-
-              <span className="note-date">
-                {new Date(note.createdAt).toLocaleString()}
-              </span>
-            </div>
+            <Note note={note} key={note._id} />
           ))}
         </div>
       )}

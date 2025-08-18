@@ -1,21 +1,18 @@
-import { Toaster } from 'react-hot-toast'
-import './App.css'
-import Comments from './components/comments/Comments'
-import Navbar from './components/navbar/Navbar'
-import Video from './components/video/Video'
-import Notes from './components/notes/Notes'
+import { Route, Routes } from "react-router-dom";
+import "./App.css";
+import Home from "./pages/Home";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 const App = () => {
   return (
-    <div id='app'>
-        <Toaster position="top-center" reverseOrder={false} />
-        <Navbar/>
-        <div id="app-content">
-          <Video/>
-        <Comments/>
-        </div>
-        <Notes/>
+    <div id="app">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+      </Routes>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;

@@ -1,35 +1,70 @@
 #comments{
     color: white;
-    width: 25%;
     background-color: #3f3f3f40;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
+    
+   
+}
+#comments h3{
+    padding: 1rem;
+
 }
 #comments-content{
-    padding: 1rem;
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 1rem;
+    gap: 1.5rem;
     overflow-y: auto;
+    padding: 1rem;
 }
 
-
-#comment{
-    padding: 5px;
-    border-bottom: 1px solid rgb(82, 82, 82);
+.comment{
+    display: flex;
+    gap: 0.5rem;
+   
+}
+.comment .info-section{
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.5rem;
+    flex: 1;
 }
-#comment h4{
-    font-size: 0.8rem;
+.comment .info-section .buttons{
+    display: flex;
+}
+.comment .info-section  button{
+    display: flex;
+}
+
+.comment .info-section  button{
+    background-color: transparent;
+    color: inherit;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    border-radius: 5rem;
+    &:hover{
+        background-color: rgb(68, 68, 68);
+    }
+}
+.comment img{
+    height: 30px;
+    width: 30px;
+    overflow: hidden;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+
+.comment h4{
+    font-size: 0.9rem;
     font-weight: normal;
 }
-#comment p{
+.comment p{
     color: rgb(179, 179, 179);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 }
 .replies{
     display: flex;
@@ -51,22 +86,8 @@
 }
 .reply p{
     color: rgb(179, 179, 179);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
 }
-#comment .reply-button{
-    background-color: transparent;
-    color: inherit;
-    cursor: pointer;
-    padding: 0.25rem 0.5rem;
-    border: none;
-    border-radius: 5rem;
-    margin-top: 0.5rem;
-    &:hover{
-        background-color: white;
-        color: initial;
-    }
-}
-
 
 .new-comment-box{
     width: 100%;
@@ -93,13 +114,41 @@
     margin-right: 0.5rem;
    
 }
-.replies-toggle{
-    color: white;
+.comment .info-section .replies-toggle{
+    color: rgb(47, 179, 255);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     background-color: transparent;
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 1rem;
+    font-size: 0.9rem;
     &:hover{
-        background-color: white;
-        color: black;
+        background-color: rgba(110, 202, 255, 0.226);
+        
     }
+}
+.reply-box{
+    display: flex;
+    flex-direction: column;
+}
+.reply-box input{
+    background-color: transparent;
+    border: none;
+    font-family: inherit;
+    border-bottom: 1px solid whitesmoke;
+    resize: none;
+    color: white;
+    padding: 0.5rem 0rem;
+    &:focus{
+        outline: none;
+    }
+}
+.reply-box div{
+    display: flex;
+    justify-content: flex-end;
+}
+.reply-box button{
+    width: fit-content;
+    
 }
