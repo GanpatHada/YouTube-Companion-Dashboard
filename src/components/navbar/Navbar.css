@@ -6,6 +6,10 @@
     padding: 1rem;
     align-items: center;
 }
+#navbar h3 a{
+    color: skyblue;
+    text-decoration: none;
+}
 #navbar .user-info{
     display: flex;
     align-items: center;

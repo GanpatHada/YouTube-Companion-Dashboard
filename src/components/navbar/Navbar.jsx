@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import "./Navbar.css";
 import { useUser } from "../../contexts/UserContext";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   const { state, dispatch } = useUser();
@@ -72,7 +73,7 @@ const Navbar = () => {
 
   return (
   <nav id="navbar">
-    <h3 id="logo">MyVideo</h3>
+    <h3 id="logo"><Link to={"/"}>Ycd</Link></h3>
 
     {state.loading ? (
       <span>Loading...</span>
