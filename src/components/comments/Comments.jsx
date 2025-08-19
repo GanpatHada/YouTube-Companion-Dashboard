@@ -3,7 +3,6 @@ import "./Comments.css";
 import toast from "react-hot-toast";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
 
-// ✅ Fetch comments for a video
 const getVideoComments = async (videoId, apiKey, myChannelId) => {
   const res = await fetch(
     `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=${videoId}&key=${apiKey}&maxResults=50`
@@ -58,10 +57,16 @@ const Comment = ({ comment, onDelete, onReply }) => {
     setShowReplies(true);
   };
 
+  console.log(comment);
+
   return (
     <div className="comment">
       <section className="image-section">
-        <img src={comment.authorImage} alt={"."} className="comment-avatar" />
+        <img
+          src={comment.authorImage || "https://i.pravatar.cc/150?img=3"}
+          alt={"."}
+          className="comment-avatar"
+        />
       </section>
       <section className="info-section">
         <div>
@@ -73,7 +78,7 @@ const Comment = ({ comment, onDelete, onReply }) => {
             className="reply-button"
             onClick={() => setShowReplyBox(true)}
           >
-          Reply
+            Reply
           </button>
 
           {comment.replies?.length > 0 && (
@@ -126,8 +131,8 @@ const Comment = ({ comment, onDelete, onReply }) => {
             <div key={reply.id} className="comment">
               <section className="image-section">
                 <img
-                  src={comment.authorImage}
-                  alt={comment.author}
+                  src={reply.authorImage || "https://i.pravatar.cc/150?img=3"}
+                  alt={"."}
                   className="comment-avatar"
                 />
               </section>
@@ -228,8 +233,9 @@ const CommentsContent = ({ videoId }) => {
       const newCommentObject = {
         id: data.id,
         author: data.snippet.topLevelComment.snippet.authorDisplayName,
+        authorImage: data.snippet.topLevelComment.snippet.authorProfileImageUrl, // ✅ add this
         text: data.snippet.topLevelComment.snippet.textDisplay,
-        canDelete: true, // ✅ always true for your own comment
+        canDelete: true,
         replies: [],
       };
 
@@ -305,8 +311,9 @@ const CommentsContent = ({ videoId }) => {
       const newReply = {
         id: data.id,
         author: data.snippet.authorDisplayName,
+        authorImage: data.snippet.authorProfileImageUrl, // ✅ add this
         text: data.snippet.textDisplay,
-        canDelete: true, // ✅ always true for your own reply
+        canDelete: true,
       };
 
       setComments((prevComments) =>
@@ -322,14 +329,9 @@ const CommentsContent = ({ videoId }) => {
   };
 
   useEffect(() => {
+    fetchComments();
     fetchMyChannelId();
   }, []);
-
-  useEffect(() => {
-    if (myChannelId !== null) {
-      fetchComments();
-    }
-  }, [myChannelId]);
 
   return (
     <div id="comments-content">

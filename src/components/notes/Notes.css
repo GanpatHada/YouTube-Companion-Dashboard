@@ -4,7 +4,6 @@
   color: #e0e0e0;
   min-height: 100vh;
   background-color: #3f3f3f40;
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -14,17 +13,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 #notes > header .search-box {
   flex: 1;
   display: flex;
   max-width: 500px;
+  width: 100%;
+  min-width: 0; 
 }
 #notes > header input {
   color: white;
-  flex: 1;
+  flex: 1 1 0%;  
+  min-width: 0; 
   background-color: #414141;
   border: none;
   padding: 0.5rem 1rem;
@@ -84,7 +86,7 @@ h2 {
 
 .notes-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(auto, 1fr));
   gap: 1rem;
 }
 

@@ -1,14 +1,13 @@
 #comments{
     color: white;
     background-color: #3f3f3f40;
-    border-radius: 10px;
     display: flex;
     flex-direction: column;
-    
-   
+       
 }
 #comments h3{
     padding: 1rem;
+    padding-bottom: 0rem;
 
 }
 #comments-content{
@@ -55,6 +54,7 @@
     overflow: hidden;
     object-fit: cover;
     border-radius: 50%;
+    background-color: gray;
 }
 
 
@@ -94,8 +94,8 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    border-bottom: 1px solid gray;
-    padding: 1rem 0rem;
+    border-bottom: 1px solid rgb(58, 58, 58);
+    padding-bottom: 1rem;
 }
 
 .new-comment-box textarea{

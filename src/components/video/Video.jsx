@@ -127,23 +127,24 @@ const Video = () => {
           </div>
         ) : (
           <div>
-            <h3>{videoInfo?.title}</h3>
+            <h4>{videoInfo?.title}</h4>
             <div>
               <p>{videoInfo?.description}</p>
               <p>{videoInfo?.publishedAt?.split("T")[0]}</p>
             </div>
-            <button className="primary-btn" onClick={() => setEditMode(true)}>
-              Edit
-            </button>
+            
           </div>
         )}
 
-        <section>
+        <section className="buttons">
+          <button className="primary-btn" onClick={() => setEditMode(true)}>
+              Edit
+            </button>
           <span>
-          <strong>Views:</strong> {videoInfo?.views}
+          Views {videoInfo?.views}
         </span>
         <span>
-          <strong>Likes:</strong> {videoInfo?.likes}
+          Likes {videoInfo?.likes}
         </span>
         </section>
       </section>
