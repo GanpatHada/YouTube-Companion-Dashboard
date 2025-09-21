@@ -18,8 +18,9 @@ const getVideoComments = async (videoId, apiKey) => {
       id: item.snippet.topLevelComment.id,
       author: top.authorDisplayName,
       authorImage: top.authorProfileImageUrl,
+      authorChannelId: top.authorChannelId?.value,
       text: top.textDisplay,
-      canDelete: false, // initially false
+      canDelete: false, // will update based on user
       replies: item.replies
         ? item.replies.comments.map((r) => {
             const rs = r.snippet;
@@ -27,8 +28,9 @@ const getVideoComments = async (videoId, apiKey) => {
               id: r.id,
               author: rs.authorDisplayName,
               authorImage: rs.authorProfileImageUrl,
+              authorChannelId: rs.authorChannelId?.value,
               text: rs.textDisplay,
-              canDelete: false, // initially false
+              canDelete: false,
             };
           })
         : [],
@@ -148,72 +150,42 @@ const Comment = ({ comment, onDelete, onReply, isLoggedIn }) => {
 
 // Comments Content Component
 const CommentsContent = ({ videoId }) => {
-  const { user } = useUser();
+  const {
+    state: { user },
+  } = useUser();
   const [comments, setComments] = useState([]);
-  const [myChannelId, setMyChannelId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState("");
 
   const apiKey = import.meta.env.VITE_APP_YOUTUBE_API_KEY;
   const loggedIn = !!user;
 
-  // Fetch comments first
+  // Fetch comments
   useEffect(() => {
-    const fetchInitialComments = async () => {
+    const fetchComments = async () => {
       setLoading(true);
       try {
         const data = await getVideoComments(videoId, apiKey);
-        setComments(data);
+        setComments(
+          data.map((c) => ({
+            ...c,
+            canDelete: c.authorChannelId === user?.channelId,
+            replies: c.replies.map((r) => ({
+              ...r,
+              canDelete: r.authorChannelId === user?.channelId,
+            })),
+          }))
+        );
       } catch {
         toast.error("Failed to fetch comments");
       } finally {
         setLoading(false);
       }
     };
-    fetchInitialComments();
-  }, [videoId]);
+    fetchComments();
+  }, [videoId, apiKey, user]);
 
-  // Fetch channel ID and update comments
-  useEffect(() => {
-    const fetchChannelId = async () => {
-      if (!loggedIn) return;
-
-      let channelId = user?.channelId || null;
-
-      if (!channelId) {
-        try {
-          const res = await fetch(
-            "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
-            {
-              headers: { Authorization: `Bearer ${localStorage.getItem("yt_access_token")}` },
-            }
-          );
-          const data = await res.json();
-          channelId = data.items?.[0]?.id || null;
-        } catch {
-          channelId = null;
-        }
-      }
-
-      setMyChannelId(channelId);
-
-      // Update comments to allow deletion for own comments
-      setComments((prev) =>
-        prev.map((c) => ({
-          ...c,
-          canDelete: channelId ? c.author === user.name || c.author === user.displayName : false,
-          replies: c.replies.map((r) => ({
-            ...r,
-            canDelete: channelId ? r.author === user.name || r.author === user.displayName : false,
-          })),
-        }))
-      );
-    };
-
-    fetchChannelId();
-  }, [user, loggedIn]);
-
-  // Post comment
+  // Post a comment
   const handlePostComment = async () => {
     if (!loggedIn) return toast.error("You must be logged in to comment.");
     if (!newComment.trim()) return toast.error("Comment cannot be empty.");
@@ -243,6 +215,7 @@ const CommentsContent = ({ videoId }) => {
         id: data.id,
         author: user.name || user.displayName,
         authorImage: data.avatar || "https://i.pravatar.cc/150?img=3",
+        authorChannelId: user.channelId,
         text: newComment,
         canDelete: true,
         replies: [],
@@ -315,6 +288,7 @@ const CommentsContent = ({ videoId }) => {
         id: data.id,
         author: user.name || user.displayName,
         authorImage: data.avatar || "https://i.pravatar.cc/150?img=3",
+        authorChannelId: user.channelId,
         text: replyText,
         canDelete: true,
       };
@@ -378,7 +352,7 @@ const CommentsContent = ({ videoId }) => {
 
 // Wrapper
 const Comments = () => {
-  const videoId = "6K3_DXCEA5Q";
+  const videoId = "6K3_DXCEA5Q"; // example video ID
   return (
     <div id="comments">
       <h3>Comments</h3>

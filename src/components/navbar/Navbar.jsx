@@ -28,23 +28,35 @@ const Navbar = () => {
   }, []);
 
   const fetchUserProfile = async (token) => {
-    try {
-      dispatch({ type: "SET_LOADING", payload: true });
+  try {
+    dispatch({ type: "SET_LOADING", payload: true });
 
-      const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+    // Fetch basic user info
+    const res = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error("Invalid or expired token");
+    const data = await res.json();
+
+    // Fetch YouTube channel ID
+    const ytRes = await fetch(
+      "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
+      {
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+    );
+    const ytData = await ytRes.json();
+    const channelId = ytData.items?.[0]?.id || null;
 
-      if (!res.ok) throw new Error("Invalid or expired token");
+    // Save user info + channelId in context
+    dispatch({ type: "SET_USER", payload: { ...data, channelId } });
+  } catch (err) {
+    console.error("Failed to fetch user info", err);
+    localStorage.removeItem("yt_access_token");
+    dispatch({ type: "SET_LOADING", payload: false });
+  }
+};
 
-      const data = await res.json();
-      dispatch({ type: "SET_USER", payload: data });
-    } catch (err) {
-      console.error("Failed to fetch user info", err);
-      localStorage.removeItem("yt_access_token");
-      dispatch({ type: "SET_LOADING", payload: false });
-    }
-  };
 
   const handleLogin = () => {
     if (window.google && window.google.accounts) {
