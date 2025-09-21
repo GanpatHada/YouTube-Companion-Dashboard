@@ -2,37 +2,33 @@ import { useEffect, useState } from "react";
 import "./Comments.css";
 import toast from "react-hot-toast";
 import { IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
+import { useUser } from "../../contexts/UserContext";
 
-const getVideoComments = async (videoId, apiKey, myChannelId) => {
+// Fetch video comments
+const getVideoComments = async (videoId, apiKey) => {
   const res = await fetch(
     `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet,replies&videoId=${videoId}&key=${apiKey}&maxResults=50`
   );
   const data = await res.json();
-
   if (!data.items) return [];
 
   return data.items.map((item) => {
-    const topComment = item.snippet.topLevelComment.snippet;
-
+    const top = item.snippet.topLevelComment.snippet;
     return {
       id: item.snippet.topLevelComment.id,
-      author: topComment.authorDisplayName,
-      authorImage: topComment.authorProfileImageUrl,
-      text: topComment.textDisplay,
-      canDelete: myChannelId
-        ? topComment.authorChannelId?.value === myChannelId
-        : false,
+      author: top.authorDisplayName,
+      authorImage: top.authorProfileImageUrl,
+      text: top.textDisplay,
+      canDelete: false, // initially false
       replies: item.replies
-        ? item.replies.comments.map((reply) => {
-            const replySnippet = reply.snippet;
+        ? item.replies.comments.map((r) => {
+            const rs = r.snippet;
             return {
-              id: reply.id,
-              author: replySnippet.authorDisplayName,
-              authorImage: replySnippet.authorProfileImageUrl,
-              text: replySnippet.textDisplay,
-              canDelete: myChannelId
-                ? replySnippet.authorChannelId?.value === myChannelId
-                : false,
+              id: r.id,
+              author: rs.authorDisplayName,
+              authorImage: rs.authorProfileImageUrl,
+              text: rs.textDisplay,
+              canDelete: false, // initially false
             };
           })
         : [],
@@ -40,8 +36,8 @@ const getVideoComments = async (videoId, apiKey, myChannelId) => {
   });
 };
 
-// ✅ Single Comment Component
-const Comment = ({ comment, onDelete, onReply }) => {
+// Single Comment Component
+const Comment = ({ comment, onDelete, onReply, isLoggedIn }) => {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [showReplies, setShowReplies] = useState(false);
@@ -57,29 +53,26 @@ const Comment = ({ comment, onDelete, onReply }) => {
     setShowReplies(true);
   };
 
-  console.log(comment);
-
   return (
     <div className="comment">
       <section className="image-section">
         <img
           src={comment.authorImage || "https://i.pravatar.cc/150?img=3"}
-          alt={"."}
+          alt="avatar"
           className="comment-avatar"
         />
       </section>
       <section className="info-section">
         <div>
           <h4>{comment.author}</h4>
-          <p>{comment.text}</p>
+          <p dangerouslySetInnerHTML={{ __html: comment.text }} />
         </div>
         <div className="buttons">
-          <button
-            className="reply-button"
-            onClick={() => setShowReplyBox(true)}
-          >
-            Reply
-          </button>
+          {isLoggedIn && (
+            <button className="reply-button" onClick={() => setShowReplyBox(true)}>
+              Reply
+            </button>
+          )}
 
           {comment.replies?.length > 0 && (
             <button
@@ -100,22 +93,19 @@ const Comment = ({ comment, onDelete, onReply }) => {
             </button>
           )}
 
-          {comment.canDelete && (
-            <button
-              className="delete-button"
-              onClick={() => onDelete(comment.id)}
-            >
+          {isLoggedIn && comment.canDelete && (
+            <button className="delete-button" onClick={() => onDelete(comment.id)}>
               Delete
             </button>
           )}
         </div>
+
         {showReplyBox && (
           <div className="reply-box">
             <input
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
               placeholder="Write your reply..."
-              rows={2}
               style={{ width: "100%", marginBottom: "6px" }}
             />
             <div>
@@ -128,25 +118,22 @@ const Comment = ({ comment, onDelete, onReply }) => {
         {showReplies &&
           comment.replies?.length > 0 &&
           comment.replies.map((reply) => (
-            <div key={reply.id} className="comment">
+            <div key={reply.id} className="comment reply-comment">
               <section className="image-section">
                 <img
                   src={reply.authorImage || "https://i.pravatar.cc/150?img=3"}
-                  alt={"."}
+                  alt="avatar"
                   className="comment-avatar"
                 />
               </section>
               <section className="info-section">
                 <div>
                   <h4>{reply.author}</h4>
-                  <p>{reply.text}</p>
+                  <p dangerouslySetInnerHTML={{ __html: reply.text }} />
                 </div>
                 <div className="buttons">
-                  {reply.canDelete && (
-                    <button
-                      className="delete-button"
-                      onClick={() => onDelete(reply.id)}
-                    >
+                  {isLoggedIn && reply.canDelete && (
+                    <button className="delete-button" onClick={() => onDelete(reply.id)}>
                       Delete
                     </button>
                   )}
@@ -159,50 +146,76 @@ const Comment = ({ comment, onDelete, onReply }) => {
   );
 };
 
-// ✅ Comments Content Component
+// Comments Content Component
 const CommentsContent = ({ videoId }) => {
+  const { user } = useUser();
   const [comments, setComments] = useState([]);
+  const [myChannelId, setMyChannelId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [myChannelId, setMyChannelId] = useState(null);
 
   const apiKey = import.meta.env.VITE_APP_YOUTUBE_API_KEY;
+  const loggedIn = !!user;
 
-  // ✅ Get my channelId (from OAuth token)
-  const fetchMyChannelId = async () => {
-    const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) return null;
-
-    try {
-      const res = await fetch(
-        "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const data = await res.json();
-      if (data.items?.length > 0) {
-        setMyChannelId(data.items[0].id);
-      }
-    } catch {
-      setMyChannelId(null);
-    }
-  };
-
-  const fetchComments = async () => {
-    try {
+  // Fetch comments first
+  useEffect(() => {
+    const fetchInitialComments = async () => {
       setLoading(true);
-      const data = await getVideoComments(videoId, apiKey, myChannelId);
-      setComments(data);
-    } catch (error) {
-      toast.error(error.message || "Unable to fetch comments");
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const data = await getVideoComments(videoId, apiKey);
+        setComments(data);
+      } catch {
+        toast.error("Failed to fetch comments");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialComments();
+  }, [videoId]);
 
-  // ✅ Post Comment
+  // Fetch channel ID and update comments
+  useEffect(() => {
+    const fetchChannelId = async () => {
+      if (!loggedIn) return;
+
+      let channelId = user?.channelId || null;
+
+      if (!channelId) {
+        try {
+          const res = await fetch(
+            "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
+            {
+              headers: { Authorization: `Bearer ${localStorage.getItem("yt_access_token")}` },
+            }
+          );
+          const data = await res.json();
+          channelId = data.items?.[0]?.id || null;
+        } catch {
+          channelId = null;
+        }
+      }
+
+      setMyChannelId(channelId);
+
+      // Update comments to allow deletion for own comments
+      setComments((prev) =>
+        prev.map((c) => ({
+          ...c,
+          canDelete: channelId ? c.author === user.name || c.author === user.displayName : false,
+          replies: c.replies.map((r) => ({
+            ...r,
+            canDelete: channelId ? r.author === user.name || r.author === user.displayName : false,
+          })),
+        }))
+      );
+    };
+
+    fetchChannelId();
+  }, [user, loggedIn]);
+
+  // Post comment
   const handlePostComment = async () => {
-    const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) return toast.error("You must be logged in to comment.");
+    if (!loggedIn) return toast.error("You must be logged in to comment.");
     if (!newComment.trim()) return toast.error("Comment cannot be empty.");
 
     try {
@@ -211,7 +224,7 @@ const CommentsContent = ({ videoId }) => {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem("yt_access_token")}`,
             Accept: "application/json",
             "Content-Type": "application/json",
           },
@@ -223,50 +236,43 @@ const CommentsContent = ({ videoId }) => {
           }),
         }
       );
-
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
 
-      toast.success("Comment posted!");
-      setNewComment("");
-
       const newCommentObject = {
         id: data.id,
-        author: data.snippet.topLevelComment.snippet.authorDisplayName,
-        authorImage: data.snippet.topLevelComment.snippet.authorProfileImageUrl, // ✅ add this
-        text: data.snippet.topLevelComment.snippet.textDisplay,
+        author: user.name || user.displayName,
+        authorImage: data.avatar || "https://i.pravatar.cc/150?img=3",
+        text: newComment,
         canDelete: true,
         replies: [],
       };
 
       setComments((prev) => [newCommentObject, ...prev]);
+      setNewComment("");
+      toast.success("Comment posted!");
     } catch (error) {
       toast.error(error.message || "Failed to post comment.");
     }
   };
 
-  // ✅ Delete Comment or Reply
+  // Delete comment
   const handleDeleteComment = async (commentId) => {
-    const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) return toast.error("You must be logged in.");
-    if (!window.confirm("Are you sure you want to delete this comment?"))
-      return;
+    if (!loggedIn) return toast.error("You must be logged in.");
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
 
     try {
       const res = await fetch(
         `https://www.googleapis.com/youtube/v3/comments?id=${commentId}`,
         {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem("yt_access_token")}` },
         }
       );
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error?.message || "Delete failed");
       }
-
-      toast.success("Comment deleted");
 
       setComments((prev) =>
         prev
@@ -277,15 +283,15 @@ const CommentsContent = ({ videoId }) => {
           )
           .filter(Boolean)
       );
+      toast.success("Comment deleted");
     } catch (error) {
       toast.error(error.message || "Failed to delete comment.");
     }
   };
 
-  // ✅ Post Reply
+  // Reply to comment
   const handleReplyToComment = async (parentCommentId, replyText) => {
-    const accessToken = localStorage.getItem("yt_access_token");
-    if (!accessToken) return toast.error("You must be logged in to reply");
+    if (!loggedIn) return toast.error("You must be logged in to reply");
 
     try {
       const res = await fetch(
@@ -293,7 +299,7 @@ const CommentsContent = ({ videoId }) => {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${localStorage.getItem("yt_access_token")}`,
             Accept: "application/json",
             "Content-Type": "application/json",
           },
@@ -302,62 +308,59 @@ const CommentsContent = ({ videoId }) => {
           }),
         }
       );
-
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
 
-      toast.success("Reply posted!");
-
       const newReply = {
         id: data.id,
-        author: data.snippet.authorDisplayName,
-        authorImage: data.snippet.authorProfileImageUrl, // ✅ add this
-        text: data.snippet.textDisplay,
+        author: user.name || user.displayName,
+        authorImage: data.avatar || "https://i.pravatar.cc/150?img=3",
+        text: replyText,
         canDelete: true,
       };
 
-      setComments((prevComments) =>
-        prevComments.map((comment) =>
+      setComments((prev) =>
+        prev.map((comment) =>
           comment.id === parentCommentId
             ? { ...comment, replies: [...(comment.replies || []), newReply] }
             : comment
         )
       );
+      toast.success("Reply posted!");
     } catch (error) {
       toast.error(error.message || "Failed to post reply.");
     }
   };
 
-  useEffect(() => {
-    fetchComments();
-    fetchMyChannelId();
-  }, []);
-
   return (
     <div id="comments-content">
-      <div className="new-comment-box">
-        <textarea
-          placeholder="Add a comment..."
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          rows={3}
-        />
-        <div style={{ marginTop: "6px" }}>
-          <button className="secondary-btn" onClick={() => setNewComment("")}>
-            Clear
-          </button>
-          <button
-            disabled={newComment.trim().length === 0}
-            className="primary-btn"
-            onClick={handlePostComment}
-          >
-            Post Comment
-          </button>
+      {loggedIn && (
+        <div className="new-comment-box">
+          <textarea
+            placeholder="Add a comment..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            rows={3}
+          />
+          <div style={{ marginTop: "6px" }}>
+            <button className="secondary-btn" onClick={() => setNewComment("")}>
+              Clear
+            </button>
+            <button
+              disabled={newComment.trim().length === 0}
+              className="primary-btn"
+              onClick={handlePostComment}
+            >
+              Post Comment
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {loading ? (
         <p>Loading comments...</p>
+      ) : comments.length === 0 ? (
+        <p>No comments yet</p>
       ) : (
         comments.map((comment) => (
           <Comment
@@ -365,6 +368,7 @@ const CommentsContent = ({ videoId }) => {
             comment={comment}
             onDelete={handleDeleteComment}
             onReply={handleReplyToComment}
+            isLoggedIn={loggedIn}
           />
         ))
       )}
@@ -372,7 +376,7 @@ const CommentsContent = ({ videoId }) => {
   );
 };
 
-// ✅ Wrapper
+// Wrapper
 const Comments = () => {
   const videoId = "6K3_DXCEA5Q";
   return (
