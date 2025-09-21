@@ -1,0 +1,45 @@
+*{
+  margin: 0px;
+  padding: 0px;
+}
+
+body{
+  background-color: rgb(36, 36, 36);
+  font-family:Arial, Helvetica, sans-serif ;
+}
+
+button{
+  border: none;
+  cursor: pointer;
+}
+button:disabled{
+  cursor: not-allowed;
+}
+
+.primary-btn{
+    background-color: white;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid white;
+    border-radius: 1rem;
+    color: black;
+    &:hover{
+        background-color: rgb(223, 223, 223);
+    }
+}
+.primary-btn:disabled{
+  background-color: whitesmoke;
+  color: gray;
+  &:hover{
+        background-color: whitesmoke;
+    }
+}
+.secondary-btn{
+    background-color: transparent;
+    padding: 0.5rem 0.75rem;
+    border-radius: 1rem;
+    border: 1px solid gray;
+    color: white;
+    &:hover{
+        background-color: rgba(223, 223, 223, 0.11);
+    }
+}
