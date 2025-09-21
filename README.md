@@ -4,6 +4,10 @@ A React-based dashboard for YouTube creators to manage their videos, comments, a
 
 ---
 
+![YouTube Companion Dashboard](./public/promo.gif)
+
+---
+
 ## Live Demo
 
 Try the app online at: [YouTube Companion Dashboard](https://ycd.netlify.app/)
