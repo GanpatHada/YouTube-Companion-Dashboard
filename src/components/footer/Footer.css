@@ -1,0 +1,21 @@
+footer ul{
+   display: flex;
+   width: 100%;
+   align-items: center;
+   justify-content: center;
+   padding: 1rem;
+   background-color: rgb(65, 65, 65);
+   gap: 2rem;
+}
+footer ul{
+    list-style: none;
+}
+footer a{
+    color: whitesmoke;
+    font-size: 0.8rem;
+    text-decoration: none;
+    &:hover{
+        text-decoration: underline;
+        color: white;
+    }
+}
